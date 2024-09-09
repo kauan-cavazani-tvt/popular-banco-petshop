@@ -62,7 +62,7 @@ class FakeDataGenerator:
 
         return {
             "customer_id": customer_id,
-            "order_date": self.faker.date_between(start_date=datetime(2023, 1, 1), end_date=datetime(2023, 12, 31)).strftime("%Y-%m-%d %H:%M:%S"),
+            "order_date": self.faker.date_time_between(start_date=datetime(2023, 1, 1), end_date=datetime(2023, 12, 31)).strftime("%Y-%m-%d %H:%M:%S"),
             "status_id": status,
             "address_id": address_id
         }
@@ -102,7 +102,7 @@ class FakeDataGenerator:
             weights=list(status_probabilities.values())
         )[0]
 
-        request_date = self.faker.date_between(start_date=date(2023, 1, 1), end_date=date(2023, 12, 31))
+        request_date = self.faker.date_time_between(start_date=date(2023, 1, 1), end_date=date(2023, 12, 31))
         request_datetime = datetime.strptime(request_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
 
         # Calcule o intervalo de tempo para adicionar à request_date
@@ -110,6 +110,14 @@ class FakeDataGenerator:
         max_days = 30 
         days_to_add = random.randint(min_days, max_days)
         service_date = request_datetime + timedelta(days=days_to_add)
+
+        # Gerar uma hora aleatória entre 9h e 18h
+        service_hour = random.randint(9, 18)
+        service_minute = random.randint(0, 59)
+        service_second = random.randint(0, 59)
+
+        # Ajustar a hora da service_date para o intervalo entre 9h e 18h
+        service_date = service_date.replace(hour=service_hour, minute=service_minute, second=service_second)
 
         return {
             "service_id": service_id,
