@@ -1,5 +1,6 @@
 import re
 import random
+from datetime import datetime
 
 def clean_phone_number(phone_number):
     """Remove caracteres não numéricos e retorna o telefone no formato DDD + número."""
@@ -37,23 +38,28 @@ def classify_product(products):
     classification = []
 
     for product in products:
-        produto_classificado = 'Desconhecido'
+        classification_product = 'Desconhecido'
         
         for keyword, animal in categories.items():
             if keyword in product['NAME'] or keyword in product['DESCRIPTION'] or keyword in product['SKU']:
-                produto_classificado = animal
+                classification_product = animal
                 break
         
-        classification.append((product['ID'], produto_classificado))
+        classification.append({
+            "ID": product['ID'], 
+            "name": product['NAME'],
+            "description": product['DESCRIPTION'],
+            "classification": classification_product
+        })
     
     return classification
 
 def get_products_for_customer(classified_products, species_of_customer):
     relevant_products = []
 
-    for product_id, product_species in classified_products:
-        if any(specie["NAME"].lower() == product_species.lower() for specie in species_of_customer):
-            relevant_products.append(product_id)
+    for product in classified_products:
+        if any(specie.lower() == product['classification'].lower() for specie in species_of_customer):
+            relevant_products.append(product)
 
     return relevant_products
 
@@ -76,3 +82,41 @@ def get_allowed_services(specie_id, services):
             return [service for service in services if service["ID"] in allowed_services]
 
     return []
+
+def add_year_to_month_day(year: int, month_day: str):
+    date_str = f"{year}-{month_day}"
+    return datetime.strptime(date_str, "%Y-%m-%d")
+
+def classify_product_per_temperature(products, temperature):
+    categories = {
+        "cold_product": [
+            "CAMA",
+            "FRIO",
+            "ROUPA",
+            "MANTA",
+            "CAMISETA"
+        ],
+        "warm_product": [
+            "BRINQUEDO",
+            "AGUA",
+            "GARRAFA",
+            "REPELENTE"
+        ]
+    }
+    
+    list_products = []
+    categories_per_temperature = categories[temperature.lower()]
+
+    for product in products:
+        for keyword in categories_per_temperature:
+            if keyword in product['name'] or keyword in product['description']:
+                list_products.append(product['ID'])
+                break
+    
+    return list_products
+
+def is_in_period(date, start_period, end_period):
+    if start_period <= end_period:
+        return start_period <= date <= end_period
+    else: 
+        return date >= start_period or date <= end_period

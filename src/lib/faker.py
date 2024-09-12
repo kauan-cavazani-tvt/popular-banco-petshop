@@ -1,5 +1,6 @@
 from faker import Faker
 from utils.utils import clean_phone_number
+from config.probabilities import getConfig
 from datetime import date, datetime, timedelta
 import random
 
@@ -50,19 +51,22 @@ class FakeDataGenerator:
     def generate_order(self, customer_id, address_id):
         """Gera dados falsos para um pedido."""
 
-        status_probabilities = {
-            2: 0.8,
-            3: 0.2
-        }
+        start_date_str = getConfig("start_date")
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+
+        end_date_str = getConfig("end_date")
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+
+        status_order_probabilities = getConfig("status_order_probabilities")
 
         status = random.choices(
-            list(status_probabilities.keys()), 
-            weights=list(status_probabilities.values())
+            list(status_order_probabilities.keys()), 
+            weights=list(status_order_probabilities.values())
         )[0]
 
         return {
             "customer_id": customer_id,
-            "order_date": self.faker.date_time_between(start_date=datetime(2023, 1, 1), end_date=datetime(2023, 12, 31)).strftime("%Y-%m-%d %H:%M:%S"),
+            "order_date": self.faker.date_time_between(start_date=start_date, end_date=end_date).strftime("%Y-%m-%d %H:%M:%S"),
             "status_id": status,
             "address_id": address_id
         }
@@ -70,17 +74,11 @@ class FakeDataGenerator:
     def generate_order_item(self, product_id, order_id):
         """Gera dados falsos de associação entre produto e pedido."""
 
-        quantity_probabilities = {
-            1: 0.6,
-            2: 0.5,
-            3: 0.3,
-            4: 0.2,
-            5: 0.1
-        }
+        quantity_order_items_probabilities = getConfig("quantity_order_items_probabilities")
 
         quantity = random.choices(
-            list(quantity_probabilities.keys()), 
-            weights=list(quantity_probabilities.values())
+            list(quantity_order_items_probabilities.keys()), 
+            weights=list(quantity_order_items_probabilities.values())
         )[0]
 
         return {
@@ -92,17 +90,20 @@ class FakeDataGenerator:
     def generate_request(self, service_id, pet_id, address_id):
         """Gera dados falsos de solicitação."""
 
-        status_probabilities = {
-            6: 0.8,
-            7: 0.2
-        }
+        start_date_str = getConfig("start_date")
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+        
+        end_date_str = getConfig("end_date")
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+
+        status_request_probabilities = getConfig("status_request_probabilities")
 
         status = random.choices(
-            list(status_probabilities.keys()), 
-            weights=list(status_probabilities.values())
+            list(status_request_probabilities.keys()), 
+            weights=list(status_request_probabilities.values())
         )[0]
 
-        request_date = self.faker.date_time_between(start_date=date(2023, 1, 1), end_date=date(2023, 12, 31))
+        request_date = self.faker.date_time_between(start_date=start_date, end_date=end_date)
         request_datetime = datetime.strptime(request_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
 
         # Calcule o intervalo de tempo para adicionar à request_date
