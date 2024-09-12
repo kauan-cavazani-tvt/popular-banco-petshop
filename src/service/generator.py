@@ -1,7 +1,7 @@
 from service.database import Database
 from lib.faker import FakeDataGenerator
 from config.probabilities import getConfig
-from utils.utils import classify_product, get_products_for_customer, get_allowed_services, add_year_to_month_day, is_in_period, classify_product_per_temperature
+from utils.utils import classify_product, get_products_for_customer, get_allowed_services, get_period_and_probabilities, select_product_id, classify_product_per_temperature, get_product_type
 import random
 import re
 
@@ -181,16 +181,7 @@ class DataGenerator:
 
         city_probabilities = getConfig("city_probabilities")
 
-        warm_period_str = getConfig("temperature_periods")["warm_period"]
-        warm_period_start = add_year_to_month_day(2023, warm_period_str["start_month_day"])
-        warm_period_end = add_year_to_month_day(2023, warm_period_str["end_month_day"])
-
-        cold_period_str = getConfig("temperature_periods")["cold_period"]
-        cold_period_start = add_year_to_month_day(2023, cold_period_str["start_month_day"])
-        cold_period_end = add_year_to_month_day(2023, cold_period_str["end_month_day"])
-
-        product_warm_probabilities = getConfig("products_order_item_probabilities")["warm"]
-        product_cold_probabilities = getConfig("products_order_item_probabilities")["cold"]
+        (warm_period_start, warm_period_end), (cold_period_start, cold_period_end), product_warm_probabilities, product_cold_probabilities = get_period_and_probabilities()
 
         orders = self.db.search(
             table_name="CUSTOMER_ORDER co",
@@ -279,29 +270,9 @@ class DataGenerator:
             products_for_customer = get_products_for_customer(classified_products_per_specie, specie_of_customer)
 
             for _ in range(quantity):
-                product_type = None
-                if is_in_period(order["ORDER_DATE"], warm_period_start, warm_period_end):
-                    product_type = random.choices(
-                        list(product_warm_probabilities.keys()), 
-                        weights=list(product_warm_probabilities.values())
-                    )[0]
-                elif is_in_period(order["ORDER_DATE"], cold_period_start, cold_period_end):
-                    product_type = random.choices(
-                        list(product_cold_probabilities.keys()), 
-                        weights=list(product_cold_probabilities.values())
-                    )[0]
+                product_type = get_product_type(order["ORDER_DATE"], [warm_period_start, warm_period_end], [cold_period_start, cold_period_end], product_warm_probabilities, product_cold_probabilities)
+                product_id = select_product_id(product_type, products_for_customer, products_of_store)
 
-                if products_for_customer:
-                    if product_type and product_type != "other":
-                        products_per_temperature = classify_product_per_temperature(products_for_customer, product_type)
-                        if products_per_temperature:
-                            product_id = random.choice(products_per_temperature)
-                        else:
-                            product_id = random.choice(products_for_customer)["ID"]
-                    else:
-                        product_id = random.choice(products_for_customer)["ID"]
-                else:
-                    product_id = random.choice(products_of_store)["ID"]
                 fake_order_item = self.fake_data.generate_order_item(product_id, order["ID"])
                 order_item_data.append(fake_order_item) 
 

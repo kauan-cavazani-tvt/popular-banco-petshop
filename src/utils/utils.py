@@ -1,6 +1,7 @@
 import re
 import random
 from datetime import datetime
+from config.probabilities import getConfig
 
 def clean_phone_number(phone_number):
     """Remove caracteres não numéricos e retorna o telefone no formato DDD + número."""
@@ -120,3 +121,46 @@ def is_in_period(date, start_period, end_period):
         return start_period <= date <= end_period
     else: 
         return date >= start_period or date <= end_period
+
+def get_period_and_probabilities():
+    """Obtém os períodos de temperatura e probabilidades de produtos."""
+    temperature_periods = getConfig("temperature_periods")
+    warm_period_start, warm_period_end = get_period_dates(temperature_periods["warm_period"])
+    cold_period_start, cold_period_end = get_period_dates(temperature_periods["cold_period"])
+    
+    product_probabilities = getConfig("products_order_item_probabilities")
+    product_warm_probabilities = product_probabilities["warm"]
+    product_cold_probabilities = product_probabilities["cold"]
+    
+    return (warm_period_start, warm_period_end), (cold_period_start, cold_period_end), product_warm_probabilities, product_cold_probabilities
+
+def get_period_dates(period_str):
+    """Retorna as datas de início e fim para um período de temperatura."""
+    start_date = add_year_to_month_day(2023, period_str["start_month_day"])
+    end_date = add_year_to_month_day(2023, period_str["end_month_day"])
+    return start_date, end_date
+
+def get_product_type(order_date, warm_period, cold_period, product_warm_probabilities, product_cold_probabilities):
+    """Obtém o tipo de produto com base no período."""
+    if is_in_period(order_date, warm_period[0], warm_period[1]):
+        return random.choices(
+            list(product_warm_probabilities.keys()), 
+            weights=list(product_warm_probabilities.values())
+        )[0]
+    elif is_in_period(order_date, cold_period[0], cold_period[1]):
+        return random.choices(
+            list(product_cold_probabilities.keys()), 
+            weights=list(product_cold_probabilities.values())
+        )[0]
+    return None
+
+def select_product_id(product_type, products_for_customer, products_of_store):
+    """Seleciona um ID de produto com base no tipo de produto e na disponibilidade."""
+    if products_for_customer:
+        if product_type and product_type != "other":
+            products_per_temperature = classify_product_per_temperature(products_for_customer, product_type)
+            if products_per_temperature:
+                return random.choice(products_per_temperature)
+        return random.choice(products_for_customer)["ID"]
+    else:
+        return random.choice(products_of_store)["ID"]
