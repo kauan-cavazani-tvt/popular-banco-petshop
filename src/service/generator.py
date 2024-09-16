@@ -223,7 +223,6 @@ class DataGenerator:
             
             species_dict[customer_id].append(specie_name)
 
-        # Preprocessar os produtos por loja para rápido acesso
         products_by_store = {}
         for product in products:
             if product["STORE_ID"] not in products_by_store:
@@ -295,7 +294,7 @@ class DataGenerator:
 
         services = self.db.search(
             table_name="SERVICE s",
-            columns=["s.ID", "ss.STORE_ID", "a.CITY_ID"],
+            columns=["s.ID", "ss.STORE_ID", "a.CITY_ID", "st.ADDRESS_ID"],
             join="JOIN STORE_SERVICE ss ON ss.SERVICE_ID = s.ID JOIN STORE st ON st.ID = ss.STORE_ID JOIN ADDRESS a ON a.ID = st.ADDRESS_ID"
         )
 
@@ -323,9 +322,11 @@ class DataGenerator:
             for _ in range(num_requests):
                 allowed_services = get_allowed_services(pet["SPECIE_ID"], services_filter)
                 if allowed_services:
-                    service_id = random.choice(allowed_services)["ID"]
+                    random_service = random.choice(allowed_services)
+                    service_id = random_service["ID"]
+                    address_id = random_service["ADDRESS_ID"]
                     
-                    fake_request = self.fake_data.generate_request(service_id, pet["ID"], pet["ADDRESS_ID"])
+                    fake_request = self.fake_data.generate_request(service_id, pet["ID"], address_id)
                     request_data.append(fake_request)
 
         columns = ["SERVICE_ID", "PET_ID", "REQUEST_DATE", "STATUS_ID", "SERVICE_DATE", "ADDRESS_ID"]
