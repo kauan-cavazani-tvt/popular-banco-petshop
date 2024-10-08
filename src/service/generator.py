@@ -1,7 +1,7 @@
 from service.database import Database
 from lib.faker import FakeDataGenerator
 from config.probabilities import getConfig
-from utils.utils import classify_product, get_products_for_customer, get_allowed_services, get_period_and_probabilities, select_product_id, classify_product_per_temperature, get_product_type
+from utils.utils import classify_product, get_products_for_customer, get_allowed_services, get_period_and_probabilities, select_product_id, get_product_type
 import random
 import re
 

@@ -1,7 +1,7 @@
 from faker import Faker
 from utils.utils import clean_phone_number
 from config.probabilities import getConfig
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import random
 
 class FakeDataGenerator:
